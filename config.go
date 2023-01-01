@@ -5,19 +5,18 @@ import (
 	"os"
 	"time"
 
-	relayv1 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/relay"
 	relayv2 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
 )
 
 // Config stores the full configuration of the relays, ACLs and other settings
 // that influence behaviour of a relay daemon.
 type Config struct {
-	Network NetworkConfig
-	ConnMgr ConnMgrConfig
-	RelayV1 RelayV1Config
-	RelayV2 RelayV2Config
-	ACL     ACLConfig
-	Daemon  DaemonConfig
+	Network    NetworkConfig
+	ConnMgr    ConnMgrConfig
+	Relay      RelayConfig
+	NATService NATServiceConfig
+	ACL        ACLConfig
+	Daemon     DaemonConfig
 }
 
 // DaemonConfig controls settings for the relay-daemon itself.
@@ -38,24 +37,21 @@ type ConnMgrConfig struct {
 	ConnMgrGrace time.Duration
 }
 
-// RelayV1Config controls activation of V1 circuits and resouce configuration
+// RelayConfig controls activation of V2 circuits and resource configuration
 // for them.
-type RelayV1Config struct {
-	Enabled   bool
-	Resources relayv1.Resources
-}
-
-// RelayV2Config controls activation of V2 circuits and resouce configuration
-// for them.
-type RelayV2Config struct {
+type RelayConfig struct {
 	Enabled   bool
 	Resources relayv2.Resources
 }
 
+// NATServiceConfig controls activation of the AutoNAT service
+type NATServiceConfig struct {
+	Enabled bool
+}
+
 // ACLConfig provides filtering configuration to allow specific peers or
-// subnets to be fronted by relays. In V2, this specifies the peers/subnets
-// that are able to make reservations on the relay. In V1, this specifies the
-// peers/subnets that can be contacted through the relays.
+// subnets to be fronted by relays. This specifies the peers/subnets
+// that are able to make reservations on the relay.
 type ACLConfig struct {
 	AllowPeers   []string
 	AllowSubnets []string
@@ -78,13 +74,12 @@ func DefaultConfig() Config {
 			ConnMgrHi:    768,
 			ConnMgrGrace: 2 * time.Minute,
 		},
-		RelayV1: RelayV1Config{
-			Enabled:   false,
-			Resources: relayv1.DefaultResources(),
-		},
-		RelayV2: RelayV2Config{
+		Relay: RelayConfig{
 			Enabled:   true,
 			Resources: relayv2.DefaultResources(),
+		},
+		NATService: NATServiceConfig{
+			Enabled: true,
 		},
 		Daemon: DaemonConfig{
 			PprofPort: 6060,

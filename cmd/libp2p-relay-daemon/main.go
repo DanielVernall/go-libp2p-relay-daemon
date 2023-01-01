@@ -10,8 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	relaydaemon "github.com/libp2p/go-libp2p-relay-daemon"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
-	relayv1 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/relay"
-	relayv2 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
+	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 )
@@ -77,6 +76,10 @@ func main() {
 		libp2p.ConnectionManager(cm),
 	)
 
+	if cfg.NATService.Enabled {
+		opts = append(opts, libp2p.EnableNATService())
+	}
+
 	host, err := libp2p.New(opts...)
 	if err != nil {
 		panic(err)
@@ -96,28 +99,18 @@ func main() {
 		panic(err)
 	}
 
-	if cfg.RelayV1.Enabled {
-		fmt.Printf("Starting RelayV1...\n")
-
-		_, err = relayv1.NewRelay(host,
-			relayv1.WithResources(cfg.RelayV1.Resources),
-			relayv1.WithACL(acl))
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("RelayV1 is running!\n")
-	}
-
-	if cfg.RelayV2.Enabled {
+	if cfg.Relay.Enabled {
 		fmt.Printf("Starting RelayV2...\n")
-		_, err = relayv2.New(host,
-			relayv2.WithResources(cfg.RelayV2.Resources),
-			relayv2.WithACL(acl))
+		_, err = relay.New(host,
+			relay.WithResources(cfg.Relay.Resources),
+			relay.WithACL(acl))
 		if err != nil {
 			panic(err)
 		}
 		fmt.Printf("RelayV2 is running!\n")
 	}
+
+	fmt.Printf("Handled protocols %v\n", host.Mux().Protocols())
 
 	select {}
 }
